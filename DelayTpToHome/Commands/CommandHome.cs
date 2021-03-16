@@ -29,33 +29,35 @@ namespace DelayTpToHome.Commands
         public void Execute(IRocketPlayer caller, string[] command)
         {
             UnturnedPlayer player = (UnturnedPlayer)caller;
-            bool result = false;
+            
 
-            foreach (CSteamID item in DelayTpToHome.Instance.TeleportationPlayers)
+            if (!BarricadeManager.tryGetBed(player.CSteamID, out Vector3 position, out byte angle))
             {
-                if (item == player.CSteamID)
+                UnturnedChat.Say(player, DelayTpToHome.Instance.Translate("command_home_not_found"), Color.red);
+                return;
+            }
+            bool result = false;
+            foreach (var item in DelayTpToHome.Instance.TeleportationPlayers)
+            {
+                if (item.Key==player.CSteamID)
                 {
                     result = true;
                     break;
                 }
+               
             }
             if (result==false)
             {
-                if (BarricadeManager.tryGetBed(player.CSteamID, out Vector3 point, out byte angle))
-                {
-                    point.y += 0.5f;
-                    DelayTpToHome.Instance.TeleportationPlayers.Add(player.CSteamID);
-                    DelayTpToHome.Instance.StartCoroutine(DelayTpToHome.Instance.HomeTeleportationInterval(player, point));
-                }
-                else
-                {
-                    UnturnedChat.Say(player, DelayTpToHome.Instance.Translate("command_home_not_found"), Color.red);
-                }
+                DelayTpToHome.Instance.TeleportationPlayers.Add(player.CSteamID, DateTime.Now);
+                UnturnedChat.Say(player, DelayTpToHome.Instance.Translate("command_home_cooldawn"), Color.green);
             }
             else
             {
                 UnturnedChat.Say(player, DelayTpToHome.Instance.Translate("command_home_already_tp"), Color.yellow);
             }
+            
+
+           
         }
     }
 }
