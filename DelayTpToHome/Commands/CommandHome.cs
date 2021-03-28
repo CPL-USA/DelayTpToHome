@@ -29,35 +29,29 @@ namespace DelayTpToHome.Commands
         public void Execute(IRocketPlayer caller, string[] command)
         {
             UnturnedPlayer player = (UnturnedPlayer)caller;
-            
 
-            if (!BarricadeManager.tryGetBed(player.CSteamID, out Vector3 position, out byte angle))
+            if (DelayTpToHome.Instance.PendingPlayersTeleport.ContainsKey(player.CSteamID))
             {
-                UnturnedChat.Say(player, DelayTpToHome.Instance.Translate("command_home_not_found"), Color.red);
                 return;
             }
-            bool result = false;
-            foreach (var item in DelayTpToHome.Instance.TeleportationPlayers)
+
+            if (!BarricadeManager.tryGetBed(player.CSteamID, out Vector3 bed, out byte angle))
             {
-                if (item.Key==player.CSteamID)
-                {
-                    result = true;
-                    break;
-                }
-               
+                UnturnedChat.Say(player, DelayTpToHome.Instance.Translate("command_home_cancel_not_found"), Color.red);
+                return;
             }
-            if (result==false)
+
+            ushort cooldown = DelayTpToHome.Instance.Configuration.Instance.AdminsCoolDown;
+            if (!player.IsAdmin)
             {
-                DelayTpToHome.Instance.TeleportationPlayers.Add(player.CSteamID, DateTime.Now);
-                UnturnedChat.Say(player, DelayTpToHome.Instance.Translate("command_home_cooldawn"), Color.green);
+                cooldown = DelayTpToHome.Instance.Configuration.Instance.GetPlayerTeleportCoolDown(player);
             }
-            else
-            {
-                UnturnedChat.Say(player, DelayTpToHome.Instance.Translate("command_home_already_tp"), Color.yellow);
-            }
+            DelayTpToHome.Instance.PendingPlayersTeleport.Add(player.CSteamID, new PendingTeleport(cooldown, player.Position));
+
+            UnturnedChat.Say(player, DelayTpToHome.Instance.Translate("command_home_bed_found_no_move", player.CharacterName, cooldown), Color.green);
             
 
-           
+
         }
     }
 }
